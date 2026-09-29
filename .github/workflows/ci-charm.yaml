@@ -89,6 +89,36 @@ jobs:
           path: charms/openshell-gateway-k8s/*.charm
           if-no-files-found: error
 
+  build-charm-arm64:
+    name: Build charm (arm64)
+    runs-on: ubuntu-24.04-arm
+    needs: [lint, unit, static]
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Pack charm
+        uses: canonical/craft-actions/charmcraft/pack@39a1fa1fd30fb8bef5abb80a24f3a06ad6261d17
+        with:
+          path: charms/openshell-gateway-k8s
+
+      - name: Verify ARM64 charm artifact
+        run: |
+          artifact="$(find charms/openshell-gateway-k8s -maxdepth 1 -name '*arm64*.charm' -print -quit)"
+          if [ -z "$artifact" ]; then
+            echo "ERROR: ARM64 charm artifact was not produced"
+            exit 1
+          fi
+          echo "ARM64 charm built: $artifact"
+
+      - name: Upload ARM64 charm artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: charm-arm64
+          path: charms/openshell-gateway-k8s/*.charm
+          if-no-files-found: error
+
   integration-suite:
     name: Integration test suite (${{ matrix.suite.name }})
     needs: [build-charm]
